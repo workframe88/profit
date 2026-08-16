@@ -1,0 +1,1193 @@
+<!doctype html>
+<html lang="th" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ต้นทุน-กำไร</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { kanit: ['Kanit', 'sans-serif'] },
+      colors: {
+        brand: { 50:'#fef7ee',100:'#fdecd7',200:'#f9d5ae',300:'#f5b87a',400:'#ef9244',500:'#eb7520',600:'#d25c16',700:'#ae4614',800:'#8b3917',900:'#773216' },
+        mint: { 50:'#f0fdf4',100:'#dcfce7',200:'#bbf7d0',300:'#86efac',400:'#4ade80',500:'#22c55e',600:'#16a34a' },
+        candy: { 50:'#fdf2f8',100:'#fce7f3',200:'#fbcfe8',300:'#f9a8d4',400:'#f472b6',500:'#ec4899',600:'#db2777' },
+        sky: { 50:'#f0f9ff',100:'#e0f2fe',200:'#bae6fd',300:'#7dd3fc',400:'#38bdf8',500:'#0ea5e9',600:'#0284c7' }
+      }
+    }
+  }
+}
+</script>
+  <style>
+  * { font-family: 'Kanit', sans-serif; }
+  html, body { height: 100%; margin: 0; }
+  .modal-backdrop { background: rgba(0,0,0,0.5); backdrop-filter: blur(6px); }
+  .card-hover { transition: all 0.3s ease; }
+  .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+  .slide-up { animation: slideUp 0.35s ease-out; }
+  @keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+  .fade-in { animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .bounce-in { animation: bounceIn 0.5s cubic-bezier(0.68,-0.55,0.27,1.55); }
+  @keyframes bounceIn { from { opacity:0; transform:scale(0.8); } to { opacity:1; transform:scale(1); } }
+  @keyframes sparkle { 0%, 100% { filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.8)); } 50% { filter: drop-shadow(0 0 16px rgba(251, 191, 36, 1)); } }
+  @keyframes mascotBounce { 0%, 100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-12px) rotate(3deg); } 50% { transform: translateY(-18px) rotate(-3deg); } 75% { transform: translateY(-8px) rotate(2deg); } }
+  @keyframes mascotClap { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0.95); } }
+  @keyframes mascotArm { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(45deg); } }
+  .nav-btn { transition: all 0.2s; }
+  .nav-btn.active { background: linear-gradient(135deg, #eb7520, #f59e0b); color: white; box-shadow: 0 4px 15px rgba(235,117,32,0.4); }
+  input:focus, select:focus { outline: none; box-shadow: 0 0 0 3px rgba(235,117,32,0.2); border-color: #eb7520; }
+  .profit-positive { color: #16a34a; }
+  .profit-negative { color: #dc2626; }
+  .toast { animation: toastIn 0.4s ease, toastOut 0.4s ease 2.6s forwards; }
+  @keyframes toastIn { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes toastOut { from { opacity:1; } to { opacity:0; } }
+  .progress-bar { animation: progressShrink 3s linear forwards; }
+  @keyframes progressShrink { from { width:100%; } to { width:0%; } }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
+  .ingredient-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; background: #fef7ee; border: 1px solid #f5b87a; color: #ae4614; }
+</style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full bg-brand-50">
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2"></div><!-- Login Screen -->
+  <div id="loginScreen" class="h-full flex items-center justify-center p-4">
+   <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm text-center bounce-in">
+    <div class="text-6xl mb-4">
+     🧁
+    </div>
+    <h1 class="text-2xl font-bold text-brand-600 mb-1" id="appTitleLogin">ต้นทุน-กำไร</h1>
+    <p class="text-gray-400 text-sm mb-6">จัดการต้นทุนและกำไรอย่างง่าย</p>
+    <div class="relative mb-4">
+     <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xl">📱</span> <input id="phoneInput" type="tel" maxlength="10" placeholder="กรอกเบอร์โทรเพื่อเข้าสู่ระบบ" class="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-2xl border-2 border-gray-200 text-center text-lg tracking-widest font-medium">
+    </div>
+    <p id="loginError" class="text-red-500 text-sm mb-3 hidden"></p><button id="loginBtn" onclick="doLogin()" class="w-full py-3 bg-gradient-to-r from-brand-500 to-brand-400 text-white rounded-2xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95"> เข้าสู่ระบบ ✨ </button>
+    <div id="loginSpinner" class="hidden mt-3">
+     <div class="inline-block w-6 h-6 border-3 border-brand-300 border-t-brand-600 rounded-full animate-spin" style="border-width:3px"></div><span class="text-sm text-gray-400 ml-2">กำลังตรวจสอบ...</span>
+    </div>
+   </div>
+  </div><!-- Main App -->
+  <div id="mainApp" class="h-full hidden flex flex-col">
+   <!-- Top Bar -->
+   <header class="bg-white shadow-sm px-4 py-3 flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center gap-2">
+     <span class="text-2xl">🧁</span>
+     <h1 class="text-lg font-bold text-brand-600" id="appTitleMain">ต้นทุน-กำไร</h1>
+    </div>
+    <div class="flex items-center gap-2">
+     <span class="text-sm text-gray-400" id="userDisplay"></span> <button onclick="doLogout()" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition">ออก</button>
+    </div>
+   </header><!-- Content -->
+   <main class="flex-1 overflow-auto p-4 pb-24" id="mainContent"></main><!-- Bottom Nav -->
+   <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg flex justify-around py-2 px-2 z-50">
+    <button onclick="navigate('dashboard')" data-nav="dashboard" class="nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl text-xs font-medium text-gray-400"> <span class="text-lg">📊</span> แดชบอร์ด </button> <button onclick="navigate('materials')" data-nav="materials" class="nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl text-xs font-medium text-gray-400"> <span class="text-lg">🥚</span> วัตถุดิบ </button> <button onclick="navigate('products')" data-nav="products" class="nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl text-xs font-medium text-gray-400"> <span class="text-lg">🍰</span> สินค้า </button> <button onclick="navigate('ranking')" data-nav="ranking" class="nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl text-xs font-medium text-gray-400"> <span class="text-lg">🏆</span> อันดับ </button>
+   </nav>
+  </div><!-- Modal Container -->
+  <div id="modalOverlay" class="fixed inset-0 z-[999] hidden modal-backdrop flex items-center justify-center p-4">
+   <div id="modalContent" class="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[85%] overflow-auto bounce-in"></div>
+  </div>
+  <script>
+// ============== CONFIG ==============
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwoG9yzqq0mO3uc4GrHKK_rJ3pV1-8kmRPKUe_vhoK29DVV4DSMdxjsVVzlQxeumbY1/exec';
+
+let currentUser = null;
+let materials = [];
+let products = [];
+let currentPage = 'dashboard';
+
+// ============== COOKIE HELPERS ==============
+function setCookie(name, val, days=365) {
+  const d = new Date(); d.setTime(d.getTime()+(days*86400000));
+  document.cookie = name+'='+encodeURIComponent(val)+';expires='+d.toUTCString()+';path=/;SameSite=Lax';
+}
+function getCookie(name) {
+  const v = document.cookie.match('(^|;)\\s*'+name+'=([^;]*)');
+  return v ? decodeURIComponent(v[2]) : null;
+}
+function deleteCookie(name) { document.cookie = name+'=;expires=Thu,01 Jan 1970 00:00:00 GMT;path=/'; }
+
+// ============== TOAST ==============
+function showToast(msg, type='success') {
+  const c = document.getElementById('toastContainer');
+  const colors = { success:'bg-mint-500', error:'bg-red-500', info:'bg-sky-500', warning:'bg-amber-500' };
+  const icons = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
+  const t = document.createElement('div');
+  t.className = `toast ${colors[type]} text-white px-5 py-3 rounded-2xl shadow-lg text-sm font-medium flex items-center gap-2 min-w-[200px]`;
+  t.innerHTML = `<span>${icons[type]}</span><span>${msg}</span><div class="absolute bottom-0 left-0 h-1 bg-white/30 rounded-b-2xl progress-bar"></div>`;
+  t.style.position='relative'; t.style.overflow='hidden';
+  c.appendChild(t);
+  setTimeout(()=>t.remove(), 3200);
+}
+
+// ============== GAS API ==============
+async function gasCall(params) {
+  try {
+    const url = GAS_URL + '?' + new URLSearchParams(params).toString();
+    const r = await fetch(url);
+    return await r.json();
+  } catch(e) {
+    console.error('GAS Error:', e);
+    return { success: false, message: 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้' };
+  }
+}
+
+// ============== LOGIN ==============
+async function doLogin() {
+  const phone = document.getElementById('phoneInput').value.trim();
+  if(!phone || phone.length < 9) {
+    document.getElementById('loginError').textContent = 'กรุณากรอกเบอร์โทรให้ถูกต้อง';
+    document.getElementById('loginError').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('loginError').classList.add('hidden');
+  document.getElementById('loginBtn').disabled = true;
+  document.getElementById('loginSpinner').classList.remove('hidden');
+
+  const res = await gasCall({ action:'login', phone });
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('loginSpinner').classList.add('hidden');
+
+  if(res.success) {
+    currentUser = { phone: res.phone, name: res.name };
+    setCookie('user_phone', res.phone);
+    setCookie('user_name', res.name);
+    enterApp();
+  } else {
+    document.getElementById('loginError').textContent = res.message || 'เข้าสู่ระบบไม่สำเร็จ';
+    document.getElementById('loginError').classList.remove('hidden');
+  }
+}
+
+function enterApp() {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  document.getElementById('userDisplay').textContent = `👋 ${currentUser.name}`;
+  loadAllData();
+  navigate('dashboard');
+}
+
+function doLogout() {
+  deleteCookie('user_phone');
+  deleteCookie('user_name');
+  currentUser = null;
+  materials = [];
+  products = [];
+  document.getElementById('mainApp').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('phoneInput').value = '';
+}
+
+// Auto login from cookie
+function tryAutoLogin() {
+  const phone = getCookie('user_phone');
+  const name = getCookie('user_name');
+  if(phone) {
+    currentUser = { phone, name: name||'User' };
+    enterApp();
+    // Verify in background
+    gasCall({action:'login', phone}).then(res=>{
+      if(!res.success) { doLogout(); showToast('เซสชั่นหมดอายุ กรุณาเข้าสู่ระบบใหม่','warning'); }
+    });
+  }
+}
+
+document.getElementById('phoneInput').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
+// ============== DATA LOADING ==============
+async function loadAllData() {
+  // Load from localStorage first (instant)
+  const cachedM = localStorage.getItem('materials_'+currentUser.phone);
+  const cachedP = localStorage.getItem('products_'+currentUser.phone);
+  if(cachedM) materials = JSON.parse(cachedM);
+  if(cachedP) products = JSON.parse(cachedP);
+  renderCurrentPage();
+
+  // Then sync from server
+  const [mRes, pRes] = await Promise.all([
+    gasCall({action:'getMaterials', phone:currentUser.phone}),
+    gasCall({action:'getProducts', phone:currentUser.phone})
+  ]);
+  if(mRes.success) { materials = mRes.data; localStorage.setItem('materials_'+currentUser.phone, JSON.stringify(materials)); }
+  if(pRes.success) { products = pRes.data; localStorage.setItem('products_'+currentUser.phone, JSON.stringify(products)); }
+  renderCurrentPage();
+}
+
+function saveLocalData() {
+  localStorage.setItem('materials_'+currentUser.phone, JSON.stringify(materials));
+  localStorage.setItem('products_'+currentUser.phone, JSON.stringify(products));
+}
+
+// ============== NAVIGATION ==============
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('[data-nav]').forEach(b=>{
+    b.classList.toggle('active', b.dataset.nav===page);
+    if(b.dataset.nav===page) b.classList.remove('text-gray-400');
+    else b.classList.add('text-gray-400');
+  });
+  renderCurrentPage();
+}
+
+function renderCurrentPage() {
+  const c = document.getElementById('mainContent');
+  switch(currentPage) {
+    case 'dashboard': c.innerHTML = renderDashboard(); break;
+    case 'materials': c.innerHTML = renderMaterials(); break;
+    case 'products': c.innerHTML = renderProducts(); break;
+    case 'ranking': c.innerHTML = renderRanking(); break;
+  }
+  lucide.createIcons();
+}
+
+// ============== MODAL ==============
+function openModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.remove('hidden');
+  document.getElementById('modalOverlay').classList.add('flex');
+  lucide.createIcons();
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.add('hidden');
+  document.getElementById('modalOverlay').classList.remove('flex');
+}
+
+// ============== UTILITIES ==============
+function genId() { return 'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,6); }
+function fmt(n) { return Number(n||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtInt(n) { return Number(n||0).toLocaleString('th-TH'); }
+
+function calcDeliveryNet(price) {
+  // GP 30% -> delivery gets 70% of price, then GP portion has +7% VAT
+  // Net = price - GP - VATofGP
+  // GP = price * 0.30
+  // VAT of GP = GP * 0.07
+  // Net = price - GP - VAT = price * (1 - 0.30 - 0.30*0.07) = price * (1 - 0.321)
+  const gp = price * 0.30;
+  const vat = gp * 0.07;
+  return price - gp - vat;
+}
+
+function getProductCost(prod) {
+  if(!prod.ingredients || !prod.ingredients.length) return 0;
+  let total = 0;
+  prod.ingredients.forEach(ing=>{
+    const mat = materials.find(m=>m.id===ing.materialId);
+    if(mat) {
+      total += (Number(mat.price) / Number(ing.usageCount||1));
+    }
+  });
+  return total;
+}
+
+function getProductCostPerUse(prod) {
+  if(!prod.ingredients || !prod.ingredients.length) return 0;
+  const totalCost = getProductCost(prod);
+  const totalUses = prod.ingredients.reduce((sum, ing) => sum + (Number(ing.usageCount)||1), 0);
+  return totalUses > 0 ? totalCost / totalUses : totalCost;
+}
+
+function getProductProfit(prod) {
+  const cost = getProductCost(prod);
+  const storeProfit = Number(prod.priceStore||0) - cost;
+  const delivNet = calcDeliveryNet(Number(prod.priceDelivery||0));
+  const delivProfit = delivNet - cost;
+  return { cost, storeProfit, delivProfit, delivNet };
+}
+
+// ============== DASHBOARD ==============
+function renderDashboard() {
+  const totalMaterials = materials.length;
+  const totalProducts = products.length;
+  let totalCost = 0, totalStoreRevenue = 0, totalStoreProfit = 0, totalDelivProfit = 0;
+  let profitData = [];
+
+  // 1. ตั้งต้นตัวแปรเก็บสถิติแยกตามระดับกำไร (%) แบบล็อกเกณฑ์ตายตัว
+  const profitByLevel = {
+    high: 0,
+    medium: 0,
+    low: 0,
+    negative: 0
+  };
+
+  products.forEach(p => {
+    const info = getProductProfit(p);
+    const priceStoreNum = Number(p.priceStore || 0);
+
+    // คำนวณเปอร์เซ็นต์กำไรหน้าร้าน (%) ของสินค้าชิ้นนี้
+    const storeProfitPct = priceStoreNum > 0 ? (info.storeProfit / priceStoreNum * 100) : 0;
+
+    // คำนวณกำไรเดลิเวอรี่ที่หักต้นทุนวัตถุดิบจริง ( info.delivNet - info.cost )
+    const actualDelivProfit = (info.delivNet || 0) - (info.cost || 0);
+
+    totalCost += info.cost;
+    totalStoreRevenue += priceStoreNum;
+    totalStoreProfit += info.storeProfit;
+    totalDelivProfit += actualDelivProfit; // สะสมยอดกำไรเดลิเวอรี่จริง
+
+    profitData.push({ 
+      name: p.name, 
+      storeProfit: info.storeProfit, 
+      delivProfit: actualDelivProfit, 
+      cost: info.cost 
+    });
+
+    // 2. แยกกลุ่มสถิติตามเปอร์เซ็นต์กำไรหน้าร้านตรงๆ (ล้อตาม if-else หน้าการ์ดสินค้า)
+    if (storeProfitPct > 0) {
+      if (storeProfitPct > 50) {
+        profitByLevel.high++;         // 🟢 สูง: เกิน 50%
+      } else if (storeProfitPct >= 30) {
+        profitByLevel.medium++;       // 🟡 ปานกลาง: 30% ถึง 50%
+      } else {
+        profitByLevel.low++;          // 🟠 ต่ำ: น้อยกว่า 30%
+      }
+    } else {
+      profitByLevel.negative++;       // 🔴 ขาดทุน: น้อยกว่าหรือเท่ากับ 0
+    }
+  });
+
+  // Top 5 sorted data
+  const sorted = [...profitData].sort((a,b)=>b.storeProfit-a.storeProfit).slice(0,5);
+  const maxProfit = sorted.length ? Math.max(...sorted.map(s=>Math.abs(s.storeProfit)),1) : 1;
+
+  // Store vs Delivery ยอดรวมทั้งหมด (ผูกเข้ากับตัวแปรที่คำนวณวัตถุดิบจริงด้านบน)
+  const storeTotal = totalStoreProfit;
+  const delivTotal = totalDelivProfit;
+  const maxCompare = Math.max(Math.abs(storeTotal), Math.abs(delivTotal), 1);
+
+  return `
+  <div class="slide-up space-y-4">
+    <h2 class="text-xl font-bold text-gray-700 flex items-center gap-2">📊 แดชบอร์ด</h2>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div class="bg-white rounded-2xl p-4 shadow-sm card-hover border-l-4 border-brand-400">
+        <div class="text-2xl mb-1">🥚</div>
+        <div class="text-2xl font-bold text-brand-600">${fmtInt(totalMaterials)}</div>
+        <div class="text-xs text-gray-400">วัตถุดิบ</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-sm card-hover border-l-4 border-candy-400">
+        <div class="text-2xl mb-1">🍰</div>
+        <div class="text-2xl font-bold text-candy-600">${fmtInt(totalProducts)}</div>
+        <div class="text-xs text-gray-400">สินค้า</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-sm card-hover border-l-4 border-mint-400">
+        <div class="text-2xl mb-1">💰</div>
+        <div class="text-2xl font-bold ${totalStoreProfit>=0?'text-mint-600':'text-red-500'}">${totalStoreRevenue>0?((totalStoreProfit/totalStoreRevenue*100).toFixed(2)+'%'):'-'}</div>
+        <div class="text-xs text-gray-400">กำไรหน้าร้านรวม</div>
+        <div class="text-xs text-gray-500 mt-1">฿${fmt(totalStoreProfit)}</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-sm card-hover border-l-4 border-sky-400">
+        <div class="text-2xl mb-1">📦</div>
+        <div class="text-2xl font-bold ${totalDelivProfit>=0?'text-sky-600':'text-red-500'}">
+          ${products.length>0?((totalDelivProfit/(products.reduce((s,p)=>s+(Number(p.priceDelivery)||0),0))*100).toFixed(2)+'%'):'-'}
+        </div>
+        <div class="text-xs text-gray-400">กำไรเดลิเวอรี่รวม</div>
+        <div class="text-xs text-gray-500 mt-1">฿${fmt(totalDelivProfit)}</div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 shadow-sm">
+      <h3 class="text-sm font-semibold text-gray-500 mb-3">📈 การกระจายระดับกำไร</h3>
+      <div class="grid grid-cols-4 gap-2 mb-4">
+        <div class="text-center">
+          <div class="text-3xl font-bold text-green-600">${profitByLevel.high}</div>
+          <div class="text-xs text-gray-500 mt-1">🟢 สูง</div>
+          <div class="text-[10px] text-gray-400 mt-1">&gt; 50%</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-yellow-600">${profitByLevel.medium}</div>
+          <div class="text-xs text-gray-500 mt-1">🟡 ปานกลาง</div>
+          <div class="text-[10px] text-gray-400 mt-1">30% - 50%</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-orange-600">${profitByLevel.low}</div>
+          <div class="text-xs text-gray-500 mt-1">🟠 ต่ำ</div>
+          <div class="text-[10px] text-gray-400 mt-1">&lt; 30%</div>
+        </div>
+        <div class="text-center">
+          <div class="text-3xl font-bold text-red-600">${profitByLevel.negative}</div>
+          <div class="text-xs text-gray-500 mt-1">🔴 ขาดทุน</div>
+          <div class="text-[10px] text-gray-400 mt-1">&le; 0%</div>
+        </div>
+      </div>
+      
+      <div class="flex h-6 rounded-lg overflow-hidden gap-0.5 bg-gray-100">
+        <div class="bg-green-500 transition-all" style="width:${totalProducts > 0 ? (profitByLevel.high / totalProducts * 100) : 0}%"></div>
+        <div class="bg-yellow-500 transition-all" style="width:${totalProducts > 0 ? (profitByLevel.medium / totalProducts * 100) : 0}%"></div>
+        <div class="bg-orange-500 transition-all" style="width:${totalProducts > 0 ? (profitByLevel.low / totalProducts * 100) : 0}%"></div>
+        <div class="bg-red-500 transition-all" style="width:${totalProducts > 0 ? (profitByLevel.negative / totalProducts * 100) : 0}%"></div>
+      </div>
+      
+      <div class="mt-3 pt-3 border-t border-gray-100">
+        <p class="text-[11px] text-gray-400 leading-relaxed">
+          <strong>หมายเหตุ:</strong> ระดับจัดเรียงตามเปอร์เซ็นต์กำไรของสินค้าหน้าร้าน
+          <br>🟢 <strong>สูง:</strong> กำไร > 50% ของราคาขาย = ดีมาก ✨
+          <br>🟡 <strong>ปานกลาง:</strong> กำไร 30% - 50% ของราคาขาย = ตามแบบแผน 📊
+          <br>🟠 <strong>ต่ำ:</strong> กำไร < 30% ของราคาขาย = ต้องปรับปรุง 📉
+          <br>🔴 <strong>ขาดทุน:</strong> กำไร ≤ 0 = ต้องพิจารณา ⚠️
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 shadow-sm">
+      <h3 class="text-sm font-semibold text-gray-500 mb-4">⚖️ เปรียบเทียบกำไร หน้าร้าน vs เดลิเวอรี่</h3>
+      <div class="flex items-end justify-around h-32 gap-3 bg-gray-50 rounded-xl p-4">
+        <div class="flex flex-col items-center h-full flex-1">
+          <div class="flex-1 flex items-end justify-center w-full">
+            <div class="w-12 rounded-t-lg transition-all ${storeTotal >= 0 ? 'bg-gradient-to-t from-mint-500 to-mint-300' : 'bg-red-400'}" 
+              style="height:${Math.max((Math.abs(storeTotal) / Math.max(Math.abs(storeTotal), Math.abs(delivTotal), 1)) * 100, 10)}%"></div>
+          </div>
+          <div class="text-[10px] text-gray-500 font-medium mt-2">🏪 หน้าร้าน</div>
+          <div class="text-xs font-bold ${storeTotal >= 0 ? 'text-mint-600' : 'text-red-500'} text-center mt-0.5">
+            ${totalStoreRevenue > 0 ? ((storeTotal / totalStoreRevenue * 100).toFixed(2) + '%') : '0.0%'}
+          </div>
+        </div>
+        
+        <div class="flex flex-col items-center h-full flex-1">
+          <div class="flex-1 flex items-end justify-center w-full">
+            <div class="w-12 rounded-t-lg transition-all ${delivTotal >= 0 ? 'bg-gradient-to-t from-sky-500 to-sky-300' : 'bg-red-400'}" 
+              style="height:${Math.max((Math.abs(delivTotal) / Math.max(Math.abs(storeTotal), Math.abs(delivTotal), 1)) * 100, 10)}%"></div>
+          </div>
+          <div class="text-[10px] text-gray-500 font-medium mt-2">🛵 เดลิเวอรี่</div>
+          <div class="text-xs font-bold ${delivTotal >= 0 ? 'text-sky-600' : 'text-red-500'} text-center mt-0.5">
+            ${products.length > 0 ? ((delivTotal / (products.reduce((s, p) => s + (Number(p.priceDelivery) || 0), 0)) * 100).toFixed(2) + '%') : '0.0%'}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 shadow-sm">
+      <h3 class="text-sm font-semibold text-gray-500 mb-3">💵 ต้นทุน-ราคา-กำไร (Top 6)</h3>
+      <div class="space-y-3">
+        ${products.slice(0,6).map(p=>{
+          const info = getProductProfit(p);
+          const storePrice = Number(p.priceStore||0);
+          const costPct = storePrice>0?(info.cost/storePrice*100):0;
+          const profitPct = storePrice>0?(info.storeProfit/storePrice*100):0;
+          return `
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="font-medium text-gray-700">${p.name}</span>
+              <span class="text-gray-500">ขาย ฿${fmt(storePrice)}</span>
+            </div>
+            <div class="flex h-5 rounded-lg overflow-hidden gap-0.5 bg-gray-100">
+              <div class="bg-gradient-to-r from-red-400 to-red-500 h-full transition-all flex items-center justify-center text-[9px] font-bold text-white" style="width:${Math.max(costPct,3)}%" title="ต้นทุน">
+                ${costPct >= 8 ? costPct.toFixed(0)+'%' : ''}
+              </div>
+              <div class="bg-gradient-to-r from-mint-400 to-mint-500 h-full transition-all flex items-center justify-center text-[9px] font-bold text-white" style="width:${Math.max(profitPct,3)}%;" title="กำไร">
+                ${profitPct >= 8 ? profitPct.toFixed(0)+'%' : ''}
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="mt-3 pt-3 border-t border-gray-100 flex gap-4 text-xs">
+        <div class="flex items-center gap-1"><div class="w-3 h-3 bg-red-500 rounded"></div><span class="text-gray-600">ต้นทุน</span></div>
+        <div class="flex items-center gap-1"><div class="w-3 h-3 bg-mint-500 rounded"></div><span class="text-gray-600">กำไร</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============== MATERIALS ==============
+function renderMaterials() {
+  const searchHtml = `
+    <div class="flex gap-2 mb-4">
+      <div class="flex-1 relative">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"><i data-lucide="search" class="w-4 h-4"></i></span>
+        <input id="matSearch" oninput="filterMaterials()" placeholder="🔍 ค้นหาวัตถุดิบ..." class="w-full pl-9 pr-4 py-2.5 bg-white rounded-2xl border border-gray-200 text-sm" />
+      </div>
+      <button onclick="openAddMaterial()" class="bg-gradient-to-r from-brand-500 to-brand-400 text-white px-4 py-2.5 rounded-2xl font-medium text-sm shadow-md hover:shadow-lg transition active:scale-95 whitespace-nowrap">
+        ➕ เพิ่ม
+      </button>
+    </div>`;
+
+  const listHtml = materials.length === 0 ?
+    `<div class="text-center py-12"><div class="text-5xl mb-3">🥚</div><p class="text-gray-300">ยังไม่มีวัตถุดิบ</p><p class="text-gray-300 text-sm">กดปุ่ม "เพิ่ม" เพื่อเริ่มต้น!</p></div>` :
+    `<div id="matList" class="grid grid-cols-2 gap-3">${materials.map((m,i)=>{
+      // Count how many products use this material
+      const usageCount = products.reduce((sum, p) => {
+        const ing = p.ingredients?.find(x => x.materialId === m.id);
+        return sum + (ing ? 1 : 0);
+      }, 0);
+      // Get product names that use this material
+      const productsUsing = products.filter(p => p.ingredients?.some(x => x.materialId === m.id)).map(p => p.name);
+      
+      const usageLevel = usageCount > 5 ? '🔥 ใช้มาก' : usageCount > 2 ? '📈 ใช้ปานกลาง' : usageCount > 0 ? '📉 ใช้น้อย' : '⭕ ไม่ใช้';
+      const usageColor = usageCount > 5 ? 'bg-red-50 text-red-600' : usageCount > 2 ? 'bg-yellow-50 text-yellow-600' : usageCount > 0 ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-400';
+      return `
+      <div class="bg-white rounded-2xl p-4 shadow-sm card-hover slide-up flex flex-col" style="animation-delay:${i*0.05}s" data-mat-id="${m.id}" data-mat-name="${m.name.toLowerCase()}">
+        <div class="flex items-center justify-between mb-3">
+          <div class="w-8 h-8 bg-brand-50 rounded-lg flex items-center justify-center text-lg">🧈</div>
+          <div class="flex gap-1">
+            <button onclick="openEditMaterial('${m.id}')" class="p-1.5 hover:bg-brand-50 rounded-lg transition" title="แก้ไข"><i data-lucide="pencil" class="w-3.5 h-3.5 text-brand-400"></i></button>
+            <button onclick="confirmDeleteMaterial('${m.id}')" class="p-1.5 hover:bg-red-50 rounded-lg transition" title="ลบ"><i data-lucide="trash-2" class="w-3.5 h-3.5 text-red-400"></i></button>
+          </div>
+        </div>
+        <div class="flex-1">
+          <div class="font-semibold text-gray-700 text-sm line-clamp-2">${m.name}</div>
+          <div class="text-brand-500 font-bold text-lg mt-2">฿${fmt(m.price)}</div>
+          <div class="mt-2 px-2 py-1 rounded-full inline-block text-xs font-bold ${usageColor}">
+            ${usageLevel} (${usageCount})
+          </div>
+
+        </div>
+      </div>`;
+    }).join('')}
+    </div>`;
+
+  return `<div class="slide-up"><h2 class="text-xl font-bold text-gray-700 flex items-center gap-2 mb-4">🥚 วัตถุดิบ <span class="text-sm font-normal text-gray-400">(${materials.length} รายการ)</span></h2>${searchHtml}${listHtml}</div>`;
+}
+
+function filterMaterials() {
+  const q = document.getElementById('matSearch').value.toLowerCase();
+  document.querySelectorAll('[data-mat-id]').forEach(el=>{
+    el.style.display = el.dataset.matName.includes(q) ? '' : 'none';
+  });
+}
+
+function openAddMaterial() {
+  openModal(`
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">🧈 เพิ่มวัตถุดิบใหม่</h3>
+        <button onclick="closeModal()" class="p-1.5 hover:bg-gray-100 rounded-lg transition" title="ปิด">
+          <i data-lucide="x" class="w-5 h-5 text-gray-400"></i>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="text-sm font-medium text-gray-500 mb-1 block">ชื่อวัตถุดิบ</label>
+          <input id="matName" placeholder="เช่น แป้งสาลี" class="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-gray-200" />
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-500 mb-1 block">ราคา (บาท)</label>
+          <input id="matPrice" type="number" step="0.01" placeholder="0.00" class="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-gray-200" />
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button onclick="saveMaterial()" class="flex-1 py-3 bg-gradient-to-r from-brand-500 to-brand-400 text-white rounded-2xl font-medium shadow-md transition active:scale-95">💾 บันทึก</button>
+      </div>
+    </div>
+  `);
+}
+
+function openEditMaterial(id) {
+  const m = materials.find(x=>x.id===id);
+  if(!m) return;
+  openModal(`
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">✏️ แก้ไขวัตถุดิบ</h3>
+        <button onclick="closeModal()" class="p-1.5 hover:bg-gray-100 rounded-lg transition" title="ปิด">
+          <i data-lucide="x" class="w-5 h-5 text-gray-400"></i>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="text-sm font-medium text-gray-500 mb-1 block">ชื่อวัตถุดิบ</label>
+          <input id="editMatName" value="${m.name}" class="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-gray-200" />
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-500 mb-1 block">ราคา (บาท)</label>
+          <input id="editMatPrice" type="number" step="0.01" value="${m.price}" class="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-gray-200" />
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button onclick="updateMaterial('${id}')" class="flex-1 py-3 bg-gradient-to-r from-brand-500 to-brand-400 text-white rounded-2xl font-medium shadow-md transition active:scale-95">💾 อัปเดต</button>
+      </div>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('editMatName').focus(), 100);
+}
+
+async function saveMaterial() {
+  const name = document.getElementById('matName').value.trim();
+  const price = document.getElementById('matPrice').value;
+  if(!name) { showToast('กรุณากรอกชื่อวัตถุดิบ','warning'); return; }
+  if(!price || isNaN(price)) { showToast('กรุณากรอกราคา','warning'); return; }
+
+  const id = genId();
+  const newMat = { id, name, price: Number(price) };
+
+  // Optimistic update
+  materials.push(newMat);
+  saveLocalData();
+  closeModal();
+  renderCurrentPage();
+  showToast('เพิ่มวัตถุดิบสำเร็จ! 🎉');
+
+  // Background sync
+  gasCall({ action:'addMaterial', phone:currentUser.phone, id, name, price });
+}
+
+async function updateMaterial(id) {
+  const name = document.getElementById('editMatName').value.trim();
+  const price = document.getElementById('editMatPrice').value;
+  if(!name || !price) { showToast('กรุณากรอกข้อมูลให้ครบ','warning'); return; }
+
+  const idx = materials.findIndex(m=>m.id===id);
+  if(idx>=0) {
+    materials[idx] = { id, name, price: Number(price) };
+  }
+  saveLocalData();
+  closeModal();
+  renderCurrentPage();
+  showToast('อัปเดตวัตถุดิบสำเร็จ! ✨');
+
+  gasCall({ action:'updateMaterial', id, name, price, phone:currentUser.phone });
+}
+
+function confirmDeleteMaterial(id) {
+  const m = materials.find(x=>x.id===id);
+  openModal(`
+    <div class="p-6 text-center">
+      <div class="text-5xl mb-3">🗑️</div>
+      <h3 class="text-lg font-bold text-gray-700 mb-2">ลบวัตถุดิบ?</h3>
+      <p class="text-gray-400 text-sm mb-4">ต้องการลบ "<strong>${m?m.name:''}</strong>" ใช่ไหม?</p>
+      <div class="flex gap-3">
+        <button onclick="closeModal()" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-2xl font-medium">ไม่ใช่</button>
+        <button onclick="deleteMaterial('${id}')" class="flex-1 py-3 bg-red-500 text-white rounded-2xl font-medium shadow-md transition active:scale-95">🗑️ ลบเลย</button>
+      </div>
+    </div>
+  `);
+}
+
+async function deleteMaterial(id) {
+  materials = materials.filter(m=>m.id!==id);
+  // Also remove from product ingredients
+  products.forEach(p=>{
+    if(p.ingredients) p.ingredients = p.ingredients.filter(i=>i.materialId!==id);
+  });
+  saveLocalData();
+  closeModal();
+  renderCurrentPage();
+  showToast('ลบวัตถุดิบแล้ว 🗑️');
+  gasCall({ action:'deleteMaterial', id, phone:currentUser.phone });
+}
+
+// ============== PRODUCTS ==============
+function renderProducts() {
+  const searchHtml = `
+    <div class="flex gap-2 mb-4">
+      <div class="flex-1 relative">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"><i data-lucide="search" class="w-4 h-4"></i></span>
+        <input id="prodSearch" oninput="filterProducts()" placeholder="🔍 ค้นหาสินค้า..." class="w-full pl-9 pr-4 py-2.5 bg-white rounded-2xl border border-gray-200 text-sm" />
+      </div>
+      <button onclick="openAddProduct()" class="bg-gradient-to-r from-candy-500 to-candy-400 text-white px-4 py-2.5 rounded-2xl font-medium text-sm shadow-md hover:shadow-lg transition active:scale-95 whitespace-nowrap">
+        ➕ เพิ่ม
+      </button>
+    </div>`;
+
+  const listHtml = products.length === 0 ?
+    `<div class="text-center py-12"><div class="text-5xl mb-3">🍰</div><p class="text-gray-300">ยังไม่มีสินค้า</p><p class="text-gray-300 text-sm">กดปุ่ม "เพิ่ม" เพื่อเริ่มต้น!</p></div>` :
+    `<div id="prodList" class="space-y-3">${products.map((p,i)=>{
+      const info = getProductProfit(p);
+      const costPerUse = getProductCostPerUse(p);
+      
+      const priceStoreNum = Number(p.priceStore) || 0;
+      const priceDelivNum = Number(p.priceDelivery) || 0;
+
+      // คำนวณฝั่งหน้าร้าน (เทียบกับราคาหน้าร้าน)
+      const costPct = priceStoreNum > 0 ? (info.cost / priceStoreNum * 100) : 0;
+      const storeProfitPct = priceStoreNum > 0 ? (info.storeProfit / priceStoreNum * 100) : 0;
+      
+      // คำนวณฝั่งเดลิเวอรี่ (เทียบกับราคาเดลิเวอรี่เต็ม)
+      const delivNetPct = priceDelivNum > 0 ? (info.delivNet / priceDelivNum * 100) : 0;
+      const delivLossPct = 100 - delivNetPct; // เปอร์เซ็นต์ที่โดนหัก (GP + VAT)
+      
+      // ปรับปรุง: คำนวณกำไรสุทธิเดลิเวอรี่ที่หักต้นทุนวัตถุดิบจริง ให้ตรงกับหน้า Dashboard
+      const actualDelivProfit = info.delivNet - info.cost; 
+      const delivProfitPct = priceDelivNum > 0 ? (actualDelivProfit / priceDelivNum * 100) : 0;
+      
+      let profitLevel = '🔴 ขาดทุน';
+      let profitColor = 'text-red-600';
+      let profitBg = 'bg-red-50';
+      
+      // เปลี่ยนมาเช็คจากตัวแปร storeProfitPct (เปอร์เซ็นต์กำไรหน้าร้าน) ตรงๆ
+      if (storeProfitPct > 0) {
+        if (storeProfitPct > 50) {         // กำไรเกิน 50%
+          profitLevel = '🟢 สูง';
+          profitColor = 'text-green-600';
+          profitBg = 'bg-green-50';
+        } else if (storeProfitPct >= 30) { // กำไรตั้งเเต่ 30% ถึง 50%
+          profitLevel = '🟡 ปานกลาง';
+          profitColor = 'text-yellow-600';
+          profitBg = 'bg-yellow-50';
+        } else {                            // กำไรน้อยกว่า 30%
+          profitLevel = '🟠 ต่ำ';
+          profitColor = 'text-orange-600';
+          profitBg = 'bg-orange-50';
+        }
+      }
+      
+      return `
+      <div class="bg-white rounded-2xl p-4 shadow-sm card-hover slide-up" style="animation-delay:${i*0.05}s" data-prod-id="${p.id}" data-prod-name="${p.name.toLowerCase()}">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3 flex-1">
+            <div class="w-10 h-10 bg-candy-50 rounded-xl flex items-center justify-center text-xl">🧁</div>
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-gray-700 text-base line-clamp-1">${p.name}</div>
+            </div>
+          </div>
+          <div class="flex gap-1 flex-shrink-0">
+            <button onclick="openEditProduct('${p.id}')" class="p-2 hover:bg-candy-50 rounded-xl transition" title="แก้ไข"><i data-lucide="pencil" class="w-4 h-4 text-candy-400"></i></button>
+            <button onclick="confirmDeleteProduct('${p.id}')" class="p-2 hover:bg-red-50 rounded-xl transition" title="ลบ"><i data-lucide="trash-2" class="w-4 h-4 text-red-400"></i></button>
+          </div>
+        </div>
+        
+        <div class="mb-3 px-3 py-1.5 ${profitBg} rounded-full inline-block">
+          <span class="${profitColor} text-sm font-bold">${profitLevel}</span>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+          <div class="bg-mint-50 rounded-xl p-3">
+            <div class="text-gray-400 text-xs">🏪 หน้าร้าน</div>
+            <br>
+            <div class="font-bold text-gray-700 text-lg">฿${fmt(p.priceStore)}</div>
+            <div class="mt-2">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-gray-600">ต้นทุน</span>
+                <span class="font-bold text-gray-700">${costPct.toFixed(2)}% (฿${fmt(info.cost)})</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div class="h-2 bg-red-400 rounded-full" style="width:${Math.min(costPct, 100)}%"></div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-gray-600">กำไร</span>
+                <span class="font-bold ${info.storeProfit>=0?'text-mint-600':'text-red-500'}">${storeProfitPct.toFixed(2)}% (฿${fmt(info.storeProfit)})</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div class="h-2 ${info.storeProfit>=0?'bg-mint-500':'bg-red-400'} rounded-full" style="width:${Math.min(Math.abs(storeProfitPct), 100)}%"></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bg-sky-50 rounded-xl p-3">
+            <div class="flex items-center justify-between mb-1">
+              <div class="text-gray-400 text-xs">🛵 เดลิเวอรี่</div>
+              
+            </div>
+            <div class="text-xs font-medium text-red-500">
+                GP+VAT: <span class="font-bold">-${delivLossPct.toFixed(2)}% (฿${fmt(priceDelivNum - info.delivNet)})</span>
+              </div>
+            <div class="font-bold text-gray-700 text-lg">฿${fmt(p.priceDelivery)}</div>
+            <div class="mt-2">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-gray-600">สุทธิ</span>
+                <span class="font-bold text-gray-700">${delivNetPct.toFixed(2)}% (฿${fmt(info.delivNet)})</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div class="h-2 bg-sky-400 rounded-full" style="width:${Math.min(delivNetPct, 100)}%"></div>
+              </div>
+            </div>
+            <div class="mt-2">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-gray-600">กำไรสุทธิ</span>
+                <span class="font-bold ${actualDelivProfit>=0?'text-sky-600':'text-red-500'}">${delivProfitPct.toFixed(2)}% (฿${fmt(actualDelivProfit)})</span>
+              </div>
+              <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div class="h-2 ${actualDelivProfit>=0?'bg-sky-500':'bg-red-400'} rounded-full" style="width:${Math.min(Math.max(delivProfitPct, 0), 100)}%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        ${p.ingredients && p.ingredients.length > 0 ? `
+        <div class="space-y-1.5">
+          ${p.ingredients
+            .map(ing => {
+              const mat = materials.find(m => m.id === ing.materialId);
+              return mat ? {ing, mat, cost: mat.price / ing.usageCount} : null;
+            })
+            .filter(x => x)
+            .sort((a, b) => b.cost - a.cost)
+            .map((item) => {
+              const totalCost = p.ingredients.reduce((sum, ing) => {
+                const m = materials.find(x => x.id === ing.materialId);
+                return sum + (m ? m.price / ing.usageCount : 0);
+              }, 0);
+              const pct = totalCost > 0 ? (item.cost / totalCost * 100) : 0;
+              return `
+              <div>
+                <div class="flex justify-between text-xs mb-0.5">
+                  <span class="font-medium text-gray-600">${item.mat.name} (${item.ing.usageCount}x)</span>
+                  <span class="text-gray-500">${((fmt(item.cost) / fmt(p.priceStore)) * 100).toFixed(2)}% (฿${fmt(item.cost)})  </span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-lg h-3 overflow-hidden">
+                  <div class="h-3 rounded-lg bg-gradient-to-r from-brand-300 to-brand-500 transition-all" style="width:${pct}%"></div>
+                </div>
+              </div>`;
+            }).join('')}
+        </div>` : ''}
+      </div>`;
+    }).join('')}</div>`;
+
+  return `<div class="slide-up"><h2 class="text-xl font-bold text-gray-700 flex items-center gap-2 mb-4">🍰 สินค้า <span class="text-sm font-normal text-gray-400">(${products.length} รายการ)</span></h2>${searchHtml}${listHtml}</div>`;
+}
+
+function filterProducts() {
+  const q = document.getElementById('prodSearch').value.toLowerCase();
+  document.querySelectorAll('[data-prod-id]').forEach(el=>{
+    el.style.display = el.dataset.prodName.includes(q) ? '' : 'none';
+  });
+}
+
+function buildIngredientSelector(existing=[]) {
+  if(materials.length===0) return '<p class="text-sm text-gray-300 py-2">ยังไม่มีวัตถุดิบ กรุณาเพิ่มวัตถุดิบก่อน 🥚</p>';
+
+  return `
+    <div id="ingContainer" class="space-y-2">
+      ${existing.map((ing,i)=>{
+        const mat = materials.find(m=>m.id===ing.materialId);
+        return `
+        <div class="flex items-center gap-2 ing-row" data-ing-idx="${i}">
+          <select class="ing-select flex-1 px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 text-sm">
+            <option value="">เลือกวัตถุดิบ</option>
+            ${materials.map(m=>`<option value="${m.id}" ${m.id===ing.materialId?'selected':''}>${m.name} (฿${fmt(m.price)})</option>`).join('')}
+          </select>
+          <input type="number" class="ing-count w-20 px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 text-sm text-center" value="${ing.usageCount||1}" min="1" placeholder="ครั้ง" />
+          <button onclick="this.parentElement.remove()" class="p-2 hover:bg-red-50 rounded-xl"><span class="text-red-400">✕</span></button>
+        </div>`;
+      }).join('')}
+    </div>
+    <button onclick="addIngRow()" class="mt-2 text-sm text-brand-500 hover:text-brand-600 font-medium transition">➕ เพิ่มวัตถุดิบ</button>
+  `;
+}
+
+function addIngRow() {
+  const container = document.getElementById('ingContainer');
+  const idx = container.children.length;
+  const div = document.createElement('div');
+  div.className = 'flex items-center gap-2 ing-row fade-in';
+  div.dataset.ingIdx = idx;
+  div.innerHTML = `
+    <select class="ing-select flex-1 px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 text-sm">
+      <option value="">เลือกวัตถุดิบ</option>
+      ${materials.map(m=>`<option value="${m.id}">${m.name} (฿${fmt(m.price)})</option>`).join('')}
+    </select>
+    <input type="number" class="ing-count w-20 px-3 py-2 bg-gray-50 rounded-xl border border-gray-200 text-sm text-center" value="1" min="1" placeholder="ครั้ง" />
+    <button onclick="this.parentElement.remove()" class="p-2 hover:bg-red-50 rounded-xl"><span class="text-red-400">✕</span></button>
+  `;
+  container.appendChild(div);
+}
+
+function collectIngredients() {
+  const rows = document.querySelectorAll('.ing-row');
+  const ings = [];
+  rows.forEach(r=>{
+    const sel = r.querySelector('.ing-select');
+    const cnt = r.querySelector('.ing-count');
+    if(sel && sel.value) {
+      ings.push({ materialId: sel.value, usageCount: Number(cnt.value)||1 });
+    }
+  });
+  return ings;
+}
+
+function openAddProduct() {
+  openModal(`
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">🧁 เพิ่มสินค้าใหม่</h3>
+        <button onclick="closeModal()" class="p-1.5 hover:bg-gray-100 rounded-lg transition" title="ปิด">
+          <i data-lucide="x" class="w-5 h-5 text-gray-400"></i>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="text-sm font-medium text-gray-500 mb-1 block">ชื่อสินค้า</label>
+          <input id="prodName" placeholder="เช่น เค้กช็อกโกแลต" class="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-gray-200" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-sm font-medium text-gray-500 mb-1 block">🏪 ราคาหน้าร้าน</label>
+            <input id="prodPriceStore" type="number" step="0.01" placeholder="0.00" class="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-gray-200" />
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500 mb-1 block">🛵 ราคาเดลิเวอรี่</label>
+            <input id="prodPriceDeliv" type="number" step="0.01" placeholder="0.00" class="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-gray-200" />
+          </div>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-500 mb-1 block">🥚 ส่วนประกอบ (วัตถุดิบ & จำนวนครั้งที่ใช้ได้)</label>
+          ${buildIngredientSelector()}
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button onclick="saveProduct()" class="flex-1 py-3 bg-gradient-to-r from-candy-500 to-candy-400 text-white rounded-2xl font-medium shadow-md transition active:scale-95">💾 บันทึก</button>
+      </div>
+    </div>
+  `);
+}
+
+function openEditProduct(id) {
+  const p = products.find(x=>x.id===id);
+  if(!p) return;
+  openModal(`
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">✏️ แก้ไขสินค้า</h3>
+        <button onclick="closeModal()" class="p-1.5 hover:bg-gray-100 rounded-lg transition" title="ปิด">
+          <i data-lucide="x" class="w-5 h-5 text-gray-400"></i>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="text-sm font-medium text-gray-500 mb-1 block">ชื่อสินค้า</label>
+          <input id="editProdName" value="${p.name}" class="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-gray-200" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-sm font-medium text-gray-500 mb-1 block">🏪 ราคาหน้าร้าน</label>
+            <input id="editProdPriceStore" type="number" step="0.01" value="${p.priceStore}" class="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-gray-200" />
+          </div>
+          <div>
+            <label class="text-sm font-medium text-gray-500 mb-1 block">🛵 ราคาเดลิเวอรี่</label>
+            <input id="editProdPriceDeliv" type="number" step="0.01" value="${p.priceDelivery}" class="w-full px-4 py-3 bg-gray-50 rounded-2xl border border-gray-200" />
+          </div>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-gray-500 mb-1 block">🥚 ส่วนประกอบ (วัตถุดิบ & จำนวนครั้งที่ใช้ได้)</label>
+          ${buildIngredientSelector(p.ingredients||[])}
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button onclick="updateProduct('${id}')" class="flex-1 py-3 bg-gradient-to-r from-candy-500 to-candy-400 text-white rounded-2xl font-medium shadow-md transition active:scale-95">💾 อัปเดต</button>
+      </div>
+    </div>
+  `);
+}
+
+async function saveProduct() {
+  const name = document.getElementById('prodName').value.trim();
+  const priceStore = document.getElementById('prodPriceStore').value;
+  const priceDelivery = document.getElementById('prodPriceDeliv').value;
+  if(!name) { showToast('กรุณากรอกชื่อสินค้า','warning'); return; }
+
+  const ingredients = collectIngredients();
+  const id = genId();
+  const newProd = { id, name, priceStore:Number(priceStore||0), priceDelivery:Number(priceDelivery||0), ingredients };
+
+  products.push(newProd);
+  saveLocalData();
+  closeModal();
+  renderCurrentPage();
+  showToast('เพิ่มสินค้าสำเร็จ! 🎉');
+
+  gasCall({ action:'addProduct', phone:currentUser.phone, id, name, priceStore:priceStore||0, priceDelivery:priceDelivery||0, ingredients:JSON.stringify(ingredients) });
+}
+
+async function updateProduct(id) {
+  const name = document.getElementById('editProdName').value.trim();
+  const priceStore = document.getElementById('editProdPriceStore').value;
+  const priceDelivery = document.getElementById('editProdPriceDeliv').value;
+  if(!name) { showToast('กรุณากรอกชื่อสินค้า','warning'); return; }
+
+  const ingredients = collectIngredients();
+  const idx = products.findIndex(p=>p.id===id);
+  if(idx>=0) {
+    products[idx] = { id, name, priceStore:Number(priceStore||0), priceDelivery:Number(priceDelivery||0), ingredients };
+  }
+  saveLocalData();
+  closeModal();
+  renderCurrentPage();
+  showToast('อัปเดตสินค้าสำเร็จ! ✨');
+
+  gasCall({ action:'updateProduct', id, phone:currentUser.phone, name, priceStore:priceStore||0, priceDelivery:priceDelivery||0, ingredients:JSON.stringify(ingredients) });
+}
+
+function confirmDeleteProduct(id) {
+  const p = products.find(x=>x.id===id);
+  openModal(`
+    <div class="p-6 text-center">
+      <div class="text-5xl mb-3">🗑️</div>
+      <h3 class="text-lg font-bold text-gray-700 mb-2">ลบสินค้า?</h3>
+      <p class="text-gray-400 text-sm mb-4">ต้องการลบ "<strong>${p?p.name:''}</strong>" ใช่ไหม?</p>
+      <div class="flex gap-3">
+        <button onclick="closeModal()" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-2xl font-medium">ไม่ใช่</button>
+        <button onclick="deleteProduct('${id}')" class="flex-1 py-3 bg-red-500 text-white rounded-2xl font-medium shadow-md transition active:scale-95">🗑️ ลบเลย</button>
+      </div>
+    </div>
+  `);
+}
+
+async function deleteProduct(id) {
+  products = products.filter(p=>p.id!==id);
+  saveLocalData();
+  closeModal();
+  renderCurrentPage();
+  showToast('ลบสินค้าแล้ว 🗑️');
+  gasCall({ action:'deleteProduct', id, phone:currentUser.phone });
+}
+
+// ============== RANKING ==============
+function renderRanking() {
+  if (products.length === 0) {
+    return `<div class="slide-up"><h2 class="text-xl font-bold text-gray-700 flex items-center gap-2 mb-4">🏆 จัดอันดับกำไร</h2><div class="text-center py-12"><div class="text-5xl mb-3">🏆</div><p class="text-gray-300">ยังไม่มีสินค้าสำหรับจัดอันดับ</p></div></div>`;
+  }
+
+  // ปรับปรุงการ Map ข้อมูล: คำนวณกำไรสุทธิเดลิเวอรี่ที่แท้จริง (หักต้นทุนวัตถุดิบ) เอาไว้สำหรับจัดอันดับ
+  const ranked = products.map(p => {
+    const info = getProductProfit(p);
+    const actualDelivProfit = (info.delivNet || 0) - (info.cost || 0);
+    return { 
+      ...p, 
+      ...info, 
+      actualDelivProfit: actualDelivProfit // กำไรเดลิเวอรี่สุทธิจริงหลังหักวัตถุดิบ
+    };
+  });
+
+  // จัดอันดับตามกำไรที่ถูกต้อง
+  const storeRank = [...ranked].sort((a, b) => b.storeProfit - a.storeProfit);
+  const delivRank = [...ranked].sort((a, b) => b.actualDelivProfit - a.actualDelivProfit);
+
+  const medals = ['🥇', '🥈', '🥉'];
+
+  return `
+  <div class="slide-up space-y-4">
+    <h2 class="text-xl font-bold text-gray-700 flex items-center gap-2">🏆 จัดอันดับกำไร</h2>
+
+    <div class="bg-white rounded-2xl p-4 shadow-sm">
+      <h3 class="font-semibold text-gray-600 mb-3 flex items-center gap-2">🏪 อันดับกำไรหน้าร้าน</h3>
+      <div class="space-y-2">
+        ${storeRank.map((p, i) => {
+          const maxP = Math.max(Math.abs(storeRank[0].storeProfit), 1);
+          const pct = (Math.abs(p.storeProfit) / maxP * 100);
+          const costPct = Number(p.priceStore) > 0 ? (p.cost / Number(p.priceStore) * 100) : 0;
+          const profitPct = Number(p.priceStore) > 0 ? (p.storeProfit / Number(p.priceStore) * 100) : 0;
+          return `
+          <div class="flex items-center gap-3">
+            <span class="text-lg w-8 text-center">${i < 3 ? medals[i] : (i + 1)}</span>
+            <div class="flex-1">
+              <div class="flex justify-between text-sm mb-0.5">
+                <span class="font-medium text-gray-700">${p.name}</span>
+                <span class="${p.storeProfit >= 0 ? 'text-mint-600' : 'text-red-500'} font-bold">฿${fmt(p.storeProfit)}</span>
+              </div>
+              <div class="text-xs text-gray-400 mb-1">ต้นทุน ${costPct.toFixed(1)}% | กำไร ${profitPct.toFixed(1)}%</div>
+              <div class="w-full bg-gray-100 rounded-full h-2">
+                <div class="h-2 rounded-full transition-all duration-700 ${p.storeProfit >= 0 ? 'bg-gradient-to-r from-mint-300 to-mint-500' : 'bg-red-400'}" style="width:${Math.max(pct, 5)}%"></div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 shadow-sm">
+      <h3 class="font-semibold text-gray-600 mb-3 flex items-center gap-2">🛵 อันดับกำไรเดลิเวอรี่</h3>
+      <div class="space-y-2">
+        ${delivRank.map((p, i) => {
+          const maxP = Math.max(Math.abs(delivRank[0].actualDelivProfit), 1);
+          const pct = (Math.abs(p.actualDelivProfit) / maxP * 100);
+          
+          const priceDelivNum = Number(p.priceDelivery) || 0;
+          // ปรับปรุง: คำนวณ % ต้นทุน และ % กำไร โดยเทียบสัดส่วนจากราคาตั้งเดลิเวอรี่เต็มจำนวน เพื่อให้ตรงกับหน้าการ์ดสินค้า
+          const costPct = priceDelivNum > 0 ? (p.cost / priceDelivNum * 100) : 0;
+          const profitPct = priceDelivNum > 0 ? (p.actualDelivProfit / priceDelivNum * 100) : 0;
+          
+          return `
+          <div class="flex items-center gap-3">
+            <span class="text-lg w-8 text-center">${i < 3 ? medals[i] : (i + 1)}</span>
+            <div class="flex-1">
+              <div class="flex justify-between text-sm mb-0.5">
+                <span class="font-medium text-gray-700">${p.name}</span>
+                <span class="${p.actualDelivProfit >= 0 ? 'text-sky-600' : 'text-red-500'} font-bold">฿${fmt(p.actualDelivProfit)}</span>
+              </div>
+              <div class="text-xs text-gray-400 mb-1">ต้นทุน ${costPct.toFixed(1)}% | กำไรสุทธิ ${profitPct.toFixed(1)}% | ราคา ฿${fmt(priceDelivNum)} → สุทธิหลังหัก GP ฿${fmt(p.delivNet)}</div>
+              <div class="w-full bg-gray-100 rounded-full h-2">
+                <div class="h-2 rounded-full transition-all duration-700 ${p.actualDelivProfit >= 0 ? 'bg-gradient-to-r from-sky-300 to-sky-500' : 'bg-red-400'}" style="width:${Math.max(pct, 5)}%"></div>
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="bg-amber-50 rounded-2xl p-4 border border-amber-200">
+      <h4 class="font-semibold text-amber-700 text-sm mb-1">💡 วิธีคำนวณเดลิเวอรี่</h4>
+      <p class="text-xs text-amber-600 leading-relaxed">
+        ราคาเดลิเวอรี่ - GP 30% - VAT 7% ของ GP = ยอดสุทธิที่ได้รับหลังหัก GP จากนั้นนำมาหักลบต้นทุนวัตถุดิบจริงเพื่อคิดกำไรสุทธิเดลิเวอรี่<br>
+        <strong>สูตรยอดรับสุทธิ:</strong> สุทธิ = ราคา × (1 - 0.30 - 0.30×0.07) = ราคา × 0.679
+      </p>
+    </div>
+  </div>`;
+}
+
+// ============== ELEMENT SDK ==============
+const defaultConfig = {
+  app_title: 'ต้นทุน-กำไร',
+  background_color: '#fef7ee',
+  surface_color: '#ffffff',
+  text_color: '#374151',
+  primary_action_color: '#eb7520',
+  secondary_action_color: '#ec4899',
+  font_family: 'Kanit',
+  font_size: 20
+};
+
+function applyConfig(config) {
+  const title = config.app_title || defaultConfig.app_title;
+  const bg = config.background_color || defaultConfig.background_color;
+  const surface = config.surface_color || defaultConfig.surface_color;
+  const text = config.text_color || defaultConfig.text_color;
+  const primary = config.primary_action_color || defaultConfig.primary_action_color;
+  const secondary = config.secondary_action_color || defaultConfig.secondary_action_color;
+  const font = config.font_family || defaultConfig.font_family;
+  const size = config.font_size || defaultConfig.font_size;
+
+  document.body.style.backgroundColor = bg;
+  document.body.style.color = text;
+  document.body.style.fontFamily = `${font}, Kanit, sans-serif`;
+  document.body.style.fontSize = size + 'px';
+
+  const titleEls = [document.getElementById('appTitleLogin'), document.getElementById('appTitleMain')];
+  titleEls.forEach(el=>{ if(el) { el.textContent = title; el.style.color = primary; }});
+
+  document.querySelectorAll('.bg-white, .bg-gray-50').forEach(el=>{
+    // Only surface cards
+  });
+}
+
+if (window.elementSdk) {
+  window.elementSdk.init({
+    defaultConfig,
+    onConfigChange: async (config) => { applyConfig(config); },
+    mapToCapabilities: (config) => ({
+      recolorables: [
+        { get:()=>config.background_color||defaultConfig.background_color, set:(v)=>{config.background_color=v; window.elementSdk.setConfig({background_color:v});} },
+        { get:()=>config.surface_color||defaultConfig.surface_color, set:(v)=>{config.surface_color=v; window.elementSdk.setConfig({surface_color:v});} },
+        { get:()=>config.text_color||defaultConfig.text_color, set:(v)=>{config.text_color=v; window.elementSdk.setConfig({text_color:v});} },
+        { get:()=>config.primary_action_color||defaultConfig.primary_action_color, set:(v)=>{config.primary_action_color=v; window.elementSdk.setConfig({primary_action_color:v});} },
+        { get:()=>config.secondary_action_color||defaultConfig.secondary_action_color, set:(v)=>{config.secondary_action_color=v; window.elementSdk.setConfig({secondary_action_color:v});} },
+      ],
+      borderables: [],
+      fontEditable: {
+        get:()=>config.font_family||defaultConfig.font_family,
+        set:(v)=>{config.font_family=v; window.elementSdk.setConfig({font_family:v});}
+      },
+      fontSizeable: {
+        get:()=>config.font_size||defaultConfig.font_size,
+        set:(v)=>{config.font_size=v; window.elementSdk.setConfig({font_size:v});}
+      }
+    }),
+    mapToEditPanelValues: (config) => new Map([
+      ['app_title', config.app_title || defaultConfig.app_title]
+    ])
+  });
+}
+
+// ============== INIT ==============
+tryAutoLogin();
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9e03f91e12fe4d99',t:'MTc3NDE2OTY4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
